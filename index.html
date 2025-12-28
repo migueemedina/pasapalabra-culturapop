@@ -299,6 +299,28 @@
             #timer-ring { font-size: 30px; }
             h1 { font-size: 30px; }
         }
+
+        /* --- ARREGLO PARA CELULARES --- */
+@media (max-width: 600px) {
+    #ui-layer {
+        width: 95%; /* Usar más ancho de pantalla */
+        padding: 15px 10px; /* Menos relleno a los costados */
+    }
+    
+    .input-area {
+        gap: 5px; /* Menor espacio entre input y botón */
+    }
+
+    .btn-ok {
+        padding: 0 10px; /* Botón más angosto */
+        min-width: 50px; /* Ancho mínimo para que no desaparezca */
+        font-size: 14px; /* Letra un poco más chica */
+    }
+
+    input {
+        font-size: 16px; /* Evita que el iPhone haga zoom al escribir */
+    }
+}
     </style>
 </head>
 <body>
@@ -774,7 +796,7 @@
 
         let data = [];
         let currentIndex = 0;
-        let timeLeft = 270; // 4 minutos y medio
+        let timeLeft = 230;
         let passCount = 0; 
         let interval;
         let roscoDOM = [];
@@ -887,6 +909,8 @@
             }
 
             document.getElementById('user-input').value = '';
+            
+            document.getElementById('user-input').focus();
         }
 
         function verifyAnswer() {
@@ -1052,5 +1076,6 @@
 </body>
 
 </html>
+
 
 
