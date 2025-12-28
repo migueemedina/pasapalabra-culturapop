@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pop Culture: El Desafío</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600&family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* --- ESTILOS CULTURA POP --- */
+        :root {
+            --bg-color: #1a1a2e;
+            --text-color: #ffffff;
+            --accent-pink: #ff00ff; /* Magenta Neón */
+            --accent-cyan: #00e5ff; /* Cyan Neón */
+            --accent-yellow: #ffea00; /* Amarillo Pop */
+            --accent-green: #00ff00; /* Verde Matrix */
+            --accent-red: #ff3333; /* Rojo Error */
+            --glass-bg: rgba(255, 255, 255, 0.1);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg-color);
+            /* Fondo estilo Synthwave */
+            background-image: 
+                linear-gradient(rgba(26, 26, 46, 0.9), rgba(26, 26, 46, 0.9)),
+                repeating-linear-gradient(0deg, transparent, transparent 19px, rgba(255, 0, 255, 0.1) 20px),
+                repeating-linear-gradient(90deg, transparent, transparent 19px, rgba(0, 229, 255, 0.1) 20px);
+            color: var(--text-color);
+            font-family: 'Montserrat', sans-serif;
+            margin: 0;
+            height: 100vh;
+            height: 100dvh; 
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #game-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            max-width: 600px;
+            max-height: 800px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .game-title {
+            position: absolute;
+            top: 5%;
+            width: 100%;
+            text-align: center;
+            font-family: 'Fredoka', sans-serif;
+            font-size: clamp(24px, 6vw, 40px);
+            color: var(--accent-cyan);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 3px 3px 0px var(--accent-pink);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        #letters-layer {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 2; pointer-events: none; 
+        }
+
+        .letter-node {
+            position: absolute;
+            width: 38px; height: 38px;
+            border-radius: 50%;
+            background: #2a2a40;
+            border: 2px solid var(--accent-cyan);
+            color: var(--accent-cyan);
+            display: flex; justify-content: center; align-items: center;
+            font-weight: bold; font-size: 16px; font-family: 'Fredoka', sans-serif;
+            box-shadow: 0 0 5px var(--accent-cyan);
+            transition: transform 0.3s ease, background 0.3s, color 0.3s;
+            top: 50%; left: 50%;
+            margin-top: -19px; margin-left: -19px;
+        }
+
+        .letter-node.active {
+            background: var(--accent-yellow); 
+            color: #000;
+            border-color: #fff;
+            transform: scale(1.6) !important; 
+            z-index: 10;
+            box-shadow: 0 0 20px var(--accent-yellow);
+        }
+        
+        .letter-node.correct { 
+            background: var(--accent-green); 
+            color: #000; 
+            border-color: var(--accent-green);
+            box-shadow: 0 0 10px var(--accent-green);
+        }
+        .letter-node.wrong { 
+            background: var(--accent-red); 
+            color: #fff; 
+            border-color: var(--accent-red);
+            opacity: 0.7;
+        }
+
+        /* --- ANIMACIONES --- */
+        @keyframes pop-neon {
+            0% { transform: scale(1.5); }
+            50% { transform: scale(2.0); box-shadow: 0 0 40px var(--accent-green); }
+            100% { transform: scale(1); }
+        }
+        @keyframes shake-glitch {
+            0% { transform: translate(0, 0) skew(0deg); }
+            20% { transform: translate(-5px, 0) skew(-10deg); }
+            40% { transform: translate(5px, 0) skew(10deg); }
+            60% { transform: translate(-5px, 0) skew(-5deg); }
+            80% { transform: translate(5px, 0) skew(5deg); }
+            100% { transform: translate(0, 0) skew(0deg); }
+        }
+
+        .anim-correct { animation: pop-neon 0.6s ease-out; }
+        .anim-wrong { animation: shake-glitch 0.4s ease-in-out; }
+
+        @keyframes input-flash-green { 0% { background: var(--accent-green); } 100% { background: rgba(0,0,0,0.4); } }
+        @keyframes input-flash-red { 0% { background: var(--accent-red); } 100% { background: rgba(0,0,0,0.4); } }
+
+        .flash-green { animation: input-flash-green 0.5s; }
+        .flash-red { animation: input-flash-red 0.5s; }
+
+        #ui-layer {
+            z-index: 5;
+            width: 85%;
+            text-align: center;
+            display: flex; flex-direction: column; gap: 12px;
+            background: rgba(20, 20, 35, 0.95); 
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid var(--accent-pink);
+            box-shadow: 0 0 30px rgba(255, 0, 255, 0.2);
+            backdrop-filter: blur(5px);
+        }
+
+        #timer-ring {
+            font-family: 'Fredoka', sans-serif;
+            font-size: 45px; color: var(--accent-yellow);
+            text-shadow: 0 0 10px var(--accent-yellow);
+            margin: 0; line-height: 1;
+        }
+
+        .question-box {
+            background: #252538;
+            border: none;
+            border-radius: 8px;
+            padding: 15px;
+            min-height: 110px;
+            color: #fff;
+            display: flex; flex-direction: column; justify-content: center;
+            border-left: 5px solid var(--accent-cyan);
+        }
+
+        .hint-label {
+            font-size: 14px; color: var(--accent-pink);
+            font-weight: 700; font-family: 'Montserrat', sans-serif;
+            text-transform: uppercase; letter-spacing: 1px;
+            margin: 0 auto 8px auto;
+        }
+
+        .definition-text {
+            font-size: clamp(14px, 4.5vw, 18px);
+            line-height: 1.4; font-weight: 400;
+        }
+
+        .guide-container { margin-bottom: 5px; min-height: 30px; }
+        
+        .guide-btn {
+            display: inline-block;
+            font-family: 'Montserrat', sans-serif; font-size: 11px;
+            text-decoration: none; color: #000;
+            background: var(--accent-cyan); 
+            padding: 6px 12px;
+            border-radius: 20px; border: none;
+            cursor: pointer; transition: all 0.2s;
+            text-transform: uppercase; font-weight: bold;
+        }
+        .guide-btn:hover { background: #fff; transform: scale(1.05); }
+
+        .input-area { display: flex; gap: 10px; height: 50px; }
+
+        input {
+            flex: 1; background: rgba(0,0,0,0.3);
+            border: 2px solid var(--accent-cyan);
+            border-radius: 8px; color: #fff;
+            font-size: 20px; padding: 0 15px;
+            font-family: 'Montserrat', sans-serif;
+            text-align: center; outline: none;
+            transition: all 0.2s;
+        }
+        input::placeholder { color: rgba(255,255,255,0.3); font-style: italic; }
+        input:focus { border-color: var(--accent-yellow); box-shadow: 0 0 10px rgba(255, 234, 0, 0.3); }
+
+        button {
+            border: none; padding: 0 20px;
+            font-family: 'Fredoka', sans-serif; font-weight: 600;
+            cursor: pointer; text-transform: uppercase;
+            border-radius: 8px; font-size: 16px;
+            letter-spacing: 1px;
+        }
+
+        .btn-ok { 
+            background: var(--accent-green); color: #000; 
+            transition: transform 0.1s;
+        }
+        .btn-ok:active { transform: scale(0.95); }
+
+        .btn-pass { 
+            background: transparent; color: #aaa; border: 2px solid #444; 
+            width: 100%; padding: 12px; margin-top: 5px;
+            transition: all 0.3s;
+        }
+        .btn-pass:hover { border-color: var(--accent-pink); color: var(--accent-pink); }
+
+        #end-screen, #start-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(26, 26, 46, 0.98);
+            z-index: 100;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            text-align: center; padding: 20px;
+            overflow-y: auto;
+        }
+
+        #end-screen { display: none; } 
+        #start-screen { display: flex; } 
+
+        h1 { 
+            font-family: 'Fredoka'; 
+            color: var(--accent-cyan); 
+            font-size: 45px; 
+            margin-bottom: 5px; 
+            text-shadow: 4px 4px 0px #000;
+        }
+        
+        .main-btn { 
+            margin-top: 20px; 
+            background: var(--accent-pink); color: #fff; 
+            padding: 15px 40px; border: none;
+            border-radius: 50px;
+            font-size: 20px; transition: all 0.2s; width: auto; min-width: 250px;
+            box-shadow: 0 5px 15px rgba(255, 0, 255, 0.4);
+        }
+        .main-btn:hover { 
+            transform: translateY(-3px); 
+            background: #ff40ff; 
+            box-shadow: 0 10px 20px rgba(255, 0, 255, 0.6);
+        }
+        
+        .share-btn {
+            background: var(--accent-yellow); color: #000;
+            margin-top: 10px; 
+            box-shadow: 0 5px 15px rgba(255, 234, 0, 0.4);
+        }
+        .share-btn:hover { background: #fffaaa; }
+
+        #ranking-box {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--accent-cyan);
+            padding: 25px;
+            border-radius: 15px;
+            margin-top: 20px;
+            width: 90%;
+            max-width: 400px;
+            display: flex; flex-direction: column; gap: 10px;
+        }
+        
+        .rank-title { font-size: 22px; color: var(--accent-yellow); font-family: 'Fredoka'; margin-bottom: 5px; }
+        .rank-msg { font-size: 15px; margin-bottom: 10px; color: #ddd; font-family: 'Montserrat'; }
+        
+        .rank-input {
+            width: 100%; padding: 12px; font-size: 16px;
+            border-radius: 6px; border: none;
+            text-align: center; background: #fff; color: #000;
+        }
+
+        .submit-btn {
+            background: var(--accent-green); color: #000;
+            width: 100%; margin-top: 5px; padding: 12px;
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.3);
+        }
+
+        @media (max-height: 550px) {
+            .game-title { display: none; }
+            #ui-layer { width: 75%; padding: 10px; }
+            .question-box { min-height: 70px; }
+            #timer-ring { font-size: 30px; }
+            h1 { font-size: 30px; }
+        }
+    </style>
+</head>
+<body>
+
+    <audio id="game-music" loop>
+        <source src="musica.mp3" type="audio/mpeg">
+    </audio>
+
+    <div id="game-wrapper">
+        <div class="game-title">POP CULTURE: EL DESAFÍO</div>
+        <div id="letters-layer"></div>
+        <div id="ui-layer">
+            <div id="timer-ring">270</div> <div class="question-box">
+                <div id="clue-type" class="hint-label">ESPERANDO...</div>
+                <div id="definition" class="definition-text">Dale Play...</div>
+            </div>
+
+            <div class="guide-container">
+                <a id="guide-link" href="#" target="_blank" class="guide-btn" style="display:none;">
+                    🔍 Ver Data
+                </a>
+            </div>
+
+            <div class="input-area">
+                <input type="text" id="user-input" placeholder="¿QUÉ ES?" autocomplete="off" disabled>
+                <button class="btn-ok" onclick="verifyAnswer()">GO</button>
+            </div>
+            <div>
+                <button class="btn-pass" onclick="passTurn()">PASAPALABRA</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="start-screen">
+        <h1>POP QUIZ</h1>
+        <p style="font-size: 18px; color: #ccc; font-family: 'Montserrat';">¿Cuánto sabés de Cine, TV e Internet?</p>
+        <button class="main-btn" onclick="startGame()">ARRANCAR</button>
+    </div>
+
+    <div id="end-screen">
+        <h1 id="end-title">GAME OVER</h1>
+        <div id="end-score" style="color:#fff; font-size:22px; margin-bottom: 10px; font-family:'Fredoka';"></div>
+        
+        <div id="ranking-box">
+            <div id="rank-display-title" class="rank-title">Calculando Status...</div>
+            <div id="rank-display-msg" class="rank-msg">...</div>
+            
+            <form id="lead-form" onsubmit="submitScore(event)">
+                <input type="email" id="player-email" class="rank-input" placeholder="Tu email para el Hall of Fame" required>
+                <button type="submit" class="submit-btn main-btn" style="margin-top:10px; width:100%; min-width:unset; font-size:16px;">
+                    🏆 GUARDAR MI PUNTAJE
+                </button>
+            </form>
+        </div>
+
+        <button class="main-btn share-btn" onclick="copyResult()">
+            📋 Copiar Resultado
+        </button>
+        <button class="main-btn" onclick="location.reload()" style="background:transparent; border:2px solid #666; font-size:14px; margin-top:15px; min-width: 200px;">
+            Probar de nuevo
+        </button>
+    </div>
+
+    <script>
+        // --- BASE DE DATOS (Mismos datos placeholder) ---
+       const QUESTIONS_DB = [
+    {
+        letter: "A",
+        variants: [
+            { answer: "Avatar", type: 0, question: "Película de James Cameron con seres azules, la más taquillera de la historia.", link: "#" },
+            { answer: "Amazon", type: 0, question: "Gigante del comercio electrónico fundado por Jeff Bezos.", link: "#" },
+            { answer: "Adele", type: 0, question: "Cantante británica famosa por éxitos como 'Hello' y 'Rolling in the Deep'.", link: "#" },
+            { answer: "Avengers", type: 0, question: "Grupo de superhéroes de Marvel que incluye a Iron Man, Thor y Hulk.", link: "#" },
+            { answer: "Apple", type: 0, question: "Empresa tecnológica creadora del iPhone y el Mac.", link: "#" },
+            { answer: "Anime", type: 0, question: "Estilo de animación de origen japonés.", link: "#" },
+            { answer: "Abba", type: 0, question: "Grupo sueco de pop famoso por 'Dancing Queen' y 'Mamma Mia'.", link: "#" },
+            { answer: "Argentina", type: 0, question: "País ganador de la Copa Mundial de Fútbol de la FIFA en 2022.", link: "#" },
+            { answer: "Android", type: 0, question: "Sistema operativo móvil desarrollado por Google, principal rival de iOS.", link: "#" },
+            { answer: "Alf", type: 0, question: "Extraterrestre peludo del planeta Melmac que protagonizó una sitcom en los 80.", link: "#" }
+        ]
+    },
+    {
+        letter: "B",
+        variants: [
+            { answer: "Barbie", type: 0, question: "Muñeca de Mattel que tuvo una exitosa película live-action en 2023.", link: "#" },
+            { answer: "Batman", type: 0, question: "Alter ego del millonario Bruce Wayne, protector de Gotham.", link: "#" },
+            { answer: "Beatles", type: 0, question: "Legendaria banda de Liverpool formada por John, Paul, George y Ringo.", link: "#" },
+            { answer: "Beyonce", type: 0, question: "Ex integrante de Destiny's Child, conocida como 'Queen B'.", link: "#" },
+            { answer: "Bond", type: 0, question: "James ______. El agente 007 al servicio de su Majestad.", link: "#" },
+            { answer: "Breaking", type: 0, question: "______ Bad. Serie sobre un profesor de química que cocina metanfetamina.", link: "#" },
+            { answer: "Bluetooth", type: 0, question: "Tecnología inalámbrica de corto alcance cuyo logo son runas nórdicas.", link: "#" },
+            { answer: "Brad", type: 0, question: "______ Pitt. Actor famoso por 'El Club de la Pelea' y ex de Angelina Jolie.", link: "#" },
+            { answer: "Britney", type: 0, question: "Spears. La princesa del pop, intérprete de 'Toxic'.", link: "#" },
+            { answer: "Bitcoin", type: 0, question: "La criptomoneda más famosa y valorada del mundo.", link: "#" }
+        ]
+    },
+    {
+        letter: "C",
+        variants: [
+            { answer: "Coco", type: 0, question: "Película de Pixar inspirada en el Día de los Muertos de México.", link: "#" },
+            { answer: "Coldplay", type: 0, question: "Banda británica liderada por Chris Martin, famosa por sus conciertos coloridos.", link: "#" },
+            { answer: "Chernobyl", type: 0, question: "Miniserie de HBO sobre el desastre nuclear de 1986.", link: "#" },
+            { answer: "Corona", type: 0, question: "The ______. Serie de Netflix sobre la familia real británica.", link: "#" },
+            { answer: "Chatgpt", type: 0, question: "Inteligencia artificial desarrollada por OpenAI que revolucionó el mundo en 2022.", link: "#" },
+            { answer: "Cervantes", type: 0, question: "Autor de 'Don Quijote de la Mancha'.", link: "#" },
+            { answer: "Cinema", type: 0, question: "Arte e industria de hacer películas (Séptimo Arte).", link: "#" },
+            { answer: "Candy", type: 0, question: "______ Crush. Juego de móviles de unir caramelos que fue viral.", link: "#" },
+            { answer: "Coachella", type: 0, question: "Famoso festival de música y artes que se celebra en California.", link: "#" },
+            { answer: "Chewbacca", type: 0, question: "Wookiee y copiloto de Han Solo en Star Wars.", link: "#" }
+        ]
+    },
+    {
+        letter: "D",
+        variants: [
+            { answer: "Disney", type: 0, question: "Compañía de entretenimiento del ratón Mickey.", link: "#" },
+            { answer: "Dua", type: 0, question: "______ Lipa. Cantante pop británica de origen albanokosovar.", link: "#" },
+            { answer: "Dracula", type: 0, question: "El vampiro más famoso de la literatura y el cine.", link: "#" },
+            { answer: "Dragon", type: 0, question: "______ Ball. Anime protagonizado por Goku.", link: "#" },
+            { answer: "Dalmata", type: 0, question: "Raza de perro de la que Cruella de Vil quería 101.", link: "#" },
+            { answer: "Dune", type: 0, question: "Saga de ciencia ficción de Frank Herbert adaptada al cine por Denis Villeneuve.", link: "#" },
+            { answer: "Dali", type: 0, question: "Salvador ______. Pintor surrealista famoso por sus relojes derretidos.", link: "#" },
+            { answer: "Dumbledore", type: 0, question: "Director de la escuela Hogwarts en la saga Harry Potter.", link: "#" },
+            { answer: "Discord", type: 0, question: "Plataforma de chat y voz muy popular entre la comunidad gamer.", link: "#" },
+            { answer: "Despacito", type: 0, question: "Canción de Luis Fonsi y Daddy Yankee que rompió récords en YouTube.", link: "#" }
+        ]
+    },
+    {
+        letter: "E",
+        variants: [
+            { answer: "Elvis", type: 0, question: "Presley. El Rey del Rock and Roll.", link: "#" },
+            { answer: "Eminem", type: 0, question: "Rapero de Detroit, conocido como Slim Shady.", link: "#" },
+            { answer: "Emoji", type: 0, question: "Pictograma usado en mensajes electrónicos, como la carita sonriente.", link: "#" },
+            { answer: "Email", type: 0, question: "Correo electrónico.", link: "#" },
+            { answer: "Everest", type: 0, question: "La montaña más alta del mundo sobre el nivel del mar.", link: "#" },
+            { answer: "Eurovision", type: 0, question: "Concurso musical anual entre países de Europa (y Australia).", link: "#" },
+            { answer: "Eilish", type: 0, question: "Billie ______. Cantante joven famosa por 'Bad Guy'.", link: "#" },
+            { answer: "Exorcista", type: 0, question: "El ______. Clásico de terror donde una niña gira la cabeza 360 grados.", link: "#" },
+            { answer: "Elon", type: 0, question: "______ Musk. Dueño de Tesla, SpaceX y X (Twitter).", link: "#" },
+            { answer: "Expediente", type: 0, question: "______ X. Serie de los 90 sobre agentes del FBI e investigaciones paranormales.", link: "#" }
+        ]
+    },
+    {
+        letter: "F",
+        variants: [
+            { answer: "Facebook", type: 0, question: "Red social creada por Mark Zuckerberg.", link: "#" },
+            { answer: "Friends", type: 0, question: "Sitcom de los 90 sobre seis amigos viviendo en Nueva York.", link: "#" },
+            { answer: "Fortnite", type: 0, question: "Videojuego Battle Royale famoso por sus bailes y construcciones.", link: "#" },
+            { answer: "Frozen", type: 0, question: "Película de Disney donde suena la canción 'Let It Go' (Libre Soy).", link: "#" },
+            { answer: "Ferrari", type: 0, question: "Marca italiana de deportivos de lujo con un caballo rampante.", link: "#" },
+            { answer: "Flash", type: 0, question: "Superhéroe de DC Comics conocido por su supervelocidad.", link: "#" },
+            { answer: "Fifa", type: 0, question: "Organismo que gobierna el fútbol mundial y nombre de un famoso videojuego.", link: "#" },
+            { answer: "Freddy", type: 0, question: "______ Mercury. Legendario vocalista de Queen.", link: "#" },
+            { answer: "Forrest", type: 0, question: "______ Gump. Película donde Tom Hanks dice: 'La vida es como una caja de bombones'.", link: "#" },
+            { answer: "Formula", type: 0, question: "______ 1. La categoría reina del automovilismo.", link: "#" }
+        ]
+    },
+    {
+        letter: "G",
+        variants: [
+            { answer: "Google", type: 0, question: "El motor de búsqueda más usado del mundo.", link: "#" },
+            { answer: "Gaga", type: 0, question: "Lady ______. Cantante pop conocida por sus trajes extravagantes y su voz.", link: "#" },
+            { answer: "Game", type: 0, question: "______ of Thrones. Serie de HBO basada en los libros de George R.R. Martin.", link: "#" },
+            { answer: "Gandalf", type: 0, question: "El mago gris (y luego blanco) de El Señor de los Anillos.", link: "#" },
+            { answer: "Goku", type: 0, question: "Protagonista Saiyan de la saga Dragon Ball.", link: "#" },
+            { answer: "Grammy", type: 0, question: "El premio más prestigioso de la industria musical.", link: "#" },
+            { answer: "Garfield", type: 0, question: "Gato naranja de las tiras cómicas que odia los lunes.", link: "#" },
+            { answer: "Gremlins", type: 0, question: "Criaturas que no debes mojar ni alimentar después de medianoche.", link: "#" },
+            { answer: "Golf", type: 0, question: "Deporte donde Tiger Woods es una leyenda.", link: "#" },
+            { answer: "GTA", type: 0, question: "Siglas de Grand Theft Auto, videojuego de mundo abierto.", link: "#" }
+        ]
+    },
+    {
+        letter: "H",
+        variants: [
+            { answer: "Harry", type: 0, question: "______ Potter. El niño que vivió.", link: "#" },
+            { answer: "Homer", type: 0, question: "Padre de la familia Simpson.", link: "#" },
+            { answer: "Hollywood", type: 0, question: "Distrito de Los Ángeles considerado la meca del cine.", link: "#" },
+            { answer: "Halloween", type: 0, question: "Festividad celebrada el 31 de octubre con disfraces.", link: "#" },
+            { answer: "Hulk", type: 0, question: "Vengador que se pone verde cuando se enfada.", link: "#" },
+            { answer: "HBO", type: 0, question: "Canal de TV responsable de series como Los Soprano y The Wire.", link: "#" },
+            { answer: "Hashtag", type: 0, question: "Etiqueta usada en redes sociales precedida por el símbolo #.", link: "#" },
+            { answer: "Hamilton", type: 0, question: "Lewis ______. Piloto británico 7 veces campeón de F1.", link: "#" },
+            { answer: "Hannah", type: 0, question: "______ Montana. Serie de Disney que lanzó a la fama a Miley Cyrus.", link: "#" },
+            { answer: "Hacker", type: 0, question: "Experto en informática capaz de romper sistemas de seguridad.", link: "#" }
+        ]
+    },
+    {
+        letter: "I",
+        variants: [
+            { answer: "Instagram", type: 0, question: "Red social propiedad de Meta enfocada en fotos y reels.", link: "#" },
+            { answer: "Iphone", type: 0, question: "El teléfono inteligente fabricado por Apple.", link: "#" },
+            { answer: "Internet", type: 0, question: "La red de redes que conecta al mundo.", link: "#" },
+            { answer: "Indiana", type: 0, question: "______ Jones. Arqueólogo aventurero interpretado por Harrison Ford.", link: "#" },
+            { answer: "Ironman", type: 0, question: "Superhéroe con armadura tecnológica, alter ego de Tony Stark.", link: "#" },
+            { answer: "Ikea", type: 0, question: "Tienda sueca de muebles listos para armar.", link: "#" },
+            { answer: "Ibiza", type: 0, question: "Isla española famosa mundialmente por sus fiestas y discotecas.", link: "#" },
+            { answer: "Imagine", type: 0, question: "Canción himno de paz de John Lennon.", link: "#" },
+            { answer: "It", type: 0, question: "Novela de Stephen King con el payaso Pennywise.", link: "#" },
+            { answer: "Influencer", type: 0, question: "Persona con capacidad de influir en compradores a través de redes sociales.", link: "#" }
+        ]
+    },
+    {
+        letter: "J",
+        variants: [
+            { answer: "Joker", type: 0, question: "El Guasón. El archienemigo de Batman.", link: "#" },
+            { answer: "Jordan", type: 0, question: "Michael ______. Leyenda del baloncesto de los Chicago Bulls.", link: "#" },
+            { answer: "Jurassic", type: 0, question: "______ Park. Película de dinosaurios dirigida por Spielberg.", link: "#" },
+            { answer: "Jackson", type: 0, question: "Michael ______. El Rey del Pop.", link: "#" },
+            { answer: "Jedi", type: 0, question: "Caballero guardián de la paz en el universo Star Wars.", link: "#" },
+            { answer: "Jumanji", type: 0, question: "Juego de mesa mágico que cobra vida y trae la selva a la ciudad.", link: "#" },
+            { answer: "Jobs", type: 0, question: "Steve ______. Cofundador de Apple.", link: "#" },
+            { answer: "Jennifer", type: 0, question: "______ Aniston. Actriz que interpretó a Rachel Green en Friends.", link: "#" },
+            { answer: "James", type: 0, question: "LeBron ______. Jugador de baloncesto apodado 'King James'.", link: "#" },
+            { answer: "Japan", type: 0, question: "Nombre en inglés de Japón, cuna del anime y los videojuegos.", link: "#" }
+        ]
+    },
+    {
+        letter: "K",
+        variants: [
+            { answer: "Kardashian", type: 0, question: "Apellido de la familia más famosa y mediática de la telerrealidad.", link: "#" },
+            { answer: "King", type: 0, question: "______ Kong. Gorila gigante del cine.", link: "#" },
+            { answer: "Karate", type: 0, question: "______ Kid. Película de los 80 donde enseñan a 'dar cera, pulir cera'.", link: "#" },
+            { answer: "Kpop", type: 0, question: "Género musical pop de Corea del Sur (BTS, Blackpink).", link: "#" },
+            { answer: "Katniss", type: 0, question: "______ Everdeen. Protagonista de Los Juegos del Hambre.", link: "#" },
+            { answer: "Ken", type: 0, question: "El novio de Barbie.", link: "#" },
+            { answer: "Kirby", type: 0, question: "Personaje rosa y redondo de Nintendo que absorbe a sus enemigos.", link: "#" },
+            { answer: "KFC", type: 0, question: "Cadena de comida rápida famosa por su pollo frito.", link: "#" },
+            { answer: "Kindle", type: 0, question: "Lector de libros electrónicos de Amazon.", link: "#" },
+            { answer: "Kill", type: 0, question: "______ Bill. Película de Tarantino con Uma Thurman.", link: "#" }
+        ]
+    },
+    {
+        letter: "L",
+        variants: [
+            { answer: "Lady", type: 0, question: "______ Gaga. Autora de 'Bad Romance'.", link: "#" },
+            { answer: "Lionel", type: 0, question: "______ Messi. Astro argentino del fútbol.", link: "#" },
+            { answer: "Lego", type: 0, question: "Juguete de bloques de construcción de plástico.", link: "#" },
+            { answer: "Linkedin", type: 0, question: "Red social orientada al uso empresarial y empleo.", link: "#" },
+            { answer: "Louvre", type: 0, question: "Museo de París donde está la Mona Lisa.", link: "#" },
+            { answer: "Lennon", type: 0, question: "John ______. Integrante de The Beatles asesinado en 1980.", link: "#" },
+            { answer: "Lion", type: 0, question: "The ______ King. Película de Disney donde muere Mufasa.", link: "#" },
+            { answer: "Linux", type: 0, question: "Sistema operativo de código abierto cuyo logo es un pingüino.", link: "#" },
+            { answer: "Lol", type: 0, question: "Siglas de 'League of Legends' o 'Laughing Out Loud'.", link: "#" },
+            { answer: "Luke", type: 0, question: "______ Skywalker. Hijo de Darth Vader.", link: "#" }
+        ]
+    },
+    {
+        letter: "M",
+        variants: [
+            { answer: "Marvel", type: 0, question: "Editorial de cómics y estudio de cine creador del UCM.", link: "#" },
+            { answer: "Madonna", type: 0, question: "La Reina del Pop, cantante de 'Like a Virgin'.", link: "#" },
+            { answer: "Mario", type: 0, question: "Super ______. El fontanero más famoso de los videojuegos.", link: "#" },
+            { answer: "Mickey", type: 0, question: "______ Mouse. La mascota oficial de Disney.", link: "#" },
+            { answer: "Matrix", type: 0, question: "Película de ciencia ficción donde Neo debe elegir entre la pastilla roja o azul.", link: "#" },
+            { answer: "Metallica", type: 0, question: "Banda de thrash metal liderada por James Hetfield.", link: "#" },
+            { answer: "Minecraft", type: 0, question: "Juego de construcción con bloques más vendido de la historia.", link: "#" },
+            { answer: "Meme", type: 0, question: "Imagen, video o texto humorístico que se viraliza en internet.", link: "#" },
+            { answer: "Maradona", type: 0, question: "Diego Armando ______. Futbolista autor de 'La Mano de Dios'.", link: "#" },
+            { answer: "Minions", type: 0, question: "Pequeños seres amarillos ayudantes de Gru.", link: "#" }
+        ]
+    },
+    {
+        letter: "N",
+        variants: [
+            { answer: "Netflix", type: 0, question: "Plataforma de streaming pionera que produce 'Stranger Things'.", link: "#" },
+            { answer: "Nike", type: 0, question: "Marca deportiva famosa por su eslogan 'Just Do It'.", link: "#" },
+            { answer: "Nasa", type: 0, question: "Agencia espacial de Estados Unidos.", link: "#" },
+            { answer: "Nirvana", type: 0, question: "Banda grunge liderada por Kurt Cobain.", link: "#" },
+            { answer: "Nemo", type: 0, question: "Pez payaso que se pierde en una película de Pixar.", link: "#" },
+            { answer: "Nintendo", type: 0, question: "Empresa japonesa de videojuegos creadora de la Switch.", link: "#" },
+            { answer: "Nolan", type: 0, question: "Christopher ______. Director de 'Oppenheimer' e 'Inception'.", link: "#" },
+            { answer: "Naruto", type: 0, question: "Ninja rubio protagonista de un famoso manga y anime.", link: "#" },
+            { answer: "Nokia", type: 0, question: "Marca de móviles famosa por la resistencia de sus modelos antiguos como el 3310.", link: "#" },
+            { answer: "Nutella", type: 0, question: "Famosa crema de avellanas y cacao.", link: "#" }
+        ]
+    },
+    {
+        letter: "Ñ",
+        variants: [
+            { answer: "España", type: 1, question: "CONTIENE LA Ñ: País de origen de La Casa de Papel.", link: "#" },
+            { answer: "Araña", type: 1, question: "CONTIENE LA Ñ: Animal que mordió a Peter Parker.", link: "#" },
+            { answer: "Piña", type: 1, question: "CONTIENE LA Ñ: Fruta donde vive Bob Esponja debajo del mar.", link: "#" },
+            { answer: "Niñera", type: 1, question: "CONTIENE LA Ñ: Profesión de Mary Poppins.", link: "#" },
+            { answer: "Montaña", type: 1, question: "CONTIENE LA Ñ: 'La ______', apodo de Gregor Clegane en Juego de Tronos.", link: "#" },
+            { answer: "Sueño", type: 1, question: "CONTIENE LA Ñ: 'Tengo un ______' (I have a dream), famosa frase de Martin Luther King.", link: "#" },
+            { answer: "Diseño", type: 1, question: "CONTIENE LA Ñ: Arte gráfico, de moda o industrial.", link: "#" },
+            { answer: "Muñeco", type: 1, question: "CONTIENE LA Ñ: Chucky es el '______ diabólico'.", link: "#" },
+            { answer: "Señal", type: 1, question: "CONTIENE LA Ñ: La Bati-______ es lo que usa la policía para llamar a Batman.", link: "#" },
+            { answer: "Niño", type: 1, question: "CONTIENE LA Ñ: Grogu es conocido popularmente como 'Baby Yoda' o 'El ______'.", link: "#" }
+        ]
+    },
+    {
+        letter: "O",
+        variants: [
+            { answer: "Oscar", type: 0, question: "Premio anual de la Academia de Artes y Ciencias Cinematográficas.", link: "#" },
+            { answer: "Oasis", type: 0, question: "Banda británica de los hermanos Gallagher, autores de 'Wonderwall'.", link: "#" },
+            { answer: "Oppenheimer", type: 0, question: "Película biográfica sobre el padre de la bomba atómica.", link: "#" },
+            { answer: "One", type: 0, question: "______ Piece. Manga y anime de piratas más largo y vendido.", link: "#" },
+            { answer: "Otaku", type: 0, question: "Término japonés para los fanáticos del anime y manga.", link: "#" },
+            { answer: "Opera", type: 0, question: "Navegador web o género musical teatral.", link: "#" },
+            { answer: "Oreo", type: 0, question: "Galleta sándwich de chocolate con relleno cremoso.", link: "#" },
+            { answer: "Office", type: 0, question: "The ______. Serie de comedia estilo documental sobre una oficina.", link: "#" },
+            { answer: "Olivia", type: 0, question: "______ Rodrigo. Cantante pop de 'Drivers License'.", link: "#" },
+            { answer: "Obi", type: 0, question: "______ Wan Kenobi. Maestro Jedi de Anakin y Luke.", link: "#" }
+        ]
+    },
+    {
+        letter: "P",
+        variants: [
+            { answer: "Pokemon", type: 0, question: "Franquicia de criaturas de bolsillo donde está Pikachu.", link: "#" },
+            { answer: "Pixar", type: 0, question: "Estudio de animación creador de Toy Story.", link: "#" },
+            { answer: "Playstation", type: 0, question: "Consola de videojuegos de Sony.", link: "#" },
+            { answer: "Pepsi", type: 0, question: "Principal rival de Coca-Cola.", link: "#" },
+            { answer: "Pink", type: 0, question: "Floyd. Banda de rock progresivo autora de 'The Wall'.", link: "#" },
+            { answer: "Piratas", type: 0, question: "______ del Caribe. Saga protagonizada por Jack Sparrow.", link: "#" },
+            { answer: "Pantera", type: 0, question: "______ Negra (Black Panther). Superhéroe rey de Wakanda.", link: "#" },
+            { answer: "Pinterest", type: 0, question: "Red social visual para buscar inspiración e ideas.", link: "#" },
+            { answer: "Podcast", type: 0, question: "Formato de audio digital episódico descargable.", link: "#" },
+            { answer: "Padrino", type: 0, question: "El ______ (The Godfather). Obra maestra del cine de mafiosos de Coppola.", link: "#" }
+        ]
+    },
+    {
+        letter: "Q",
+        variants: [
+            { answer: "Queen", type: 0, question: "Banda británica autora de 'Bohemian Rhapsody'.", link: "#" },
+            { answer: "Quijote", type: 0, question: "Personaje literario que luchaba contra molinos de viento.", link: "#" },
+            { answer: "Quentin", type: 0, question: "______ Tarantino. Director de Pulp Fiction.", link: "#" },
+            { answer: "Qatar", type: 0, question: "País sede del Mundial de fútbol 2022.", link: "#" },
+            { answer: "QR", type: 0, question: "Código de barras cuadrado que escaneas con el celular.", link: "#" },
+            { answer: "Quidditch", type: 0, question: "Deporte mágico que se juega sobre escobas en Harry Potter.", link: "#" },
+            { answer: "Quinn", type: 0, question: "Harley ______. Novia del Joker y antihéroe de DC.", link: "#" },
+            { answer: "Quiz", type: 0, question: "Cuestionario breve para evaluar conocimientos, muy común en internet.", link: "#" },
+            { answer: "Breaking", type: 1, question: "CONTIENE LA Q: Serie '______ Bad'.", link: "#" },
+            { answer: "Aquaman", type: 1, question: "CONTIENE LA Q: Superhéroe rey de la Atlántida.", link: "#" }
+        ]
+    },
+    {
+        letter: "R",
+        variants: [
+            { answer: "Rihanna", type: 0, question: "Cantante de Barbados y empresaria de Fenty.", link: "#" },
+            { answer: "Rolling", type: 0, question: "The ______ Stones. Banda de Mick Jagger.", link: "#" },
+            { answer: "Ronaldo", type: 0, question: "Cristiano ______. Futbolista portugués conocido como CR7.", link: "#" },
+            { answer: "Rocky", type: 0, question: "Boxeador interpretado por Sylvester Stallone.", link: "#" },
+            { answer: "Reddit", type: 0, question: "Plataforma de foros y comunidades de internet.", link: "#" },
+            { answer: "Rick", type: 0, question: "______ and Morty. Serie animada de ciencia ficción y humor negro.", link: "#" },
+            { answer: "Rosalia", type: 0, question: "Cantante española creadora de 'Motomami'.", link: "#" },
+            { answer: "Ratatouille", type: 0, question: "Película sobre una rata que quiere ser chef.", link: "#" },
+            { answer: "Rap", type: 0, question: "Género musical de artistas como 2Pac, Eminem y Jay-Z.", link: "#" },
+            { answer: "Rock", type: 0, question: "Género musical derivado del Rock and Roll.", link: "#" }
+        ]
+    },
+    {
+        letter: "S",
+        variants: [
+            { answer: "Shakira", type: 0, question: "Cantante colombiana famosa por el 'Waka Waka' y sus caderas.", link: "#" },
+            { answer: "Star", type: 0, question: "______ Wars. La Guerra de las Galaxias.", link: "#" },
+            { answer: "Spotify", type: 0, question: "Aplicación líder en streaming de música.", link: "#" },
+            { answer: "Simpson", type: 0, question: "Los ______. La familia amarilla más famosa de la TV.", link: "#" },
+            { answer: "Superman", type: 0, question: "Superhéroe kryptoniano vulnerable a la kryptonita.", link: "#" },
+            { answer: "Shrek", type: 0, question: "Ogro verde de DreamWorks.", link: "#" },
+            { answer: "Swift", type: 0, question: "Taylor ______. Estrella pop con una inmensa base de fans (Swifties).", link: "#" },
+            { answer: "Samsung", type: 0, question: "Gigante tecnológico de Corea del Sur, rival de Apple.", link: "#" },
+            { answer: "Sonic", type: 0, question: "Erizo azul veloz, mascota de Sega.", link: "#" },
+            { answer: "Stranger", type: 0, question: "______ Things. Serie de Netflix ambientada en los 80 con niños y monstruos.", link: "#" }
+        ]
+    },
+    {
+        letter: "T",
+        variants: [
+            { answer: "Twitter", type: 0, question: "Red social de microblogging ahora llamada X.", link: "#" },
+            { answer: "Tiktok", type: 0, question: "Red social de videos cortos vertical de origen chino.", link: "#" },
+            { answer: "Titanic", type: 0, question: "Transatlántico hundido en 1912 y película de 1997.", link: "#" },
+            { answer: "Thor", type: 0, question: "Dios del trueno en la mitología nórdica y en Marvel.", link: "#" },
+            { answer: "Tesla", type: 0, question: "Marca de coches eléctricos dirigida por Elon Musk.", link: "#" },
+            { answer: "Taylor", type: 0, question: "______ Swift. Cantante de 'Shake it Off'.", link: "#" },
+            { answer: "Tetris", type: 0, question: "Juego de encajar piezas geométricas que caen.", link: "#" },
+            { answer: "Tarantino", type: 0, question: "Quentin ______. Director famoso por su violencia estilizada.", link: "#" },
+            { answer: "Toy", type: 0, question: "______ Story. Primera película de Pixar, sobre juguetes vivos.", link: "#" },
+            { answer: "Twitch", type: 0, question: "Plataforma de streaming en vivo enfocada en gamers.", link: "#" }
+        ]
+    },
+    {
+        letter: "U",
+        variants: [
+            { answer: "Uber", type: 0, question: "App de transporte que revolucionó el servicio de taxis.", link: "#" },
+            { answer: "Uno", type: 0, question: "Juego de cartas donde debes gritar el nombre del juego al final.", link: "#" },
+            { answer: "U2", type: 0, question: "Banda irlandesa liderada por Bono.", link: "#" },
+            { answer: "Ursula", type: 0, question: "Villana pulpo de La Sirenita.", link: "#" },
+            { answer: "Umbrella", type: 0, question: "Academy. Serie de superhéroes disfuncionales o canción de Rihanna.", link: "#" },
+            { answer: "Usb", type: 0, question: "Puerto estándar para conectar periféricos al ordenador.", link: "#" },
+            { answer: "Universo", type: 0, question: "Marvel tiene su propio ______ Cinematográfico (UCM).", link: "#" },
+            { answer: "Up", type: 0, question: "Película de Pixar sobre una casa que vuela con globos.", link: "#" },
+            { answer: "Underground", type: 0, question: "Término inglés para referirse a la cultura alternativa o 'subterránea'.", link: "#" },
+            { answer: "Usa", type: 0, question: "Siglas en inglés de Estados Unidos de América.", link: "#" }
+        ]
+    },
+    {
+        letter: "V",
+        variants: [
+            { answer: "Vader", type: 0, question: "Darth ______. El villano más icónico de Star Wars.", link: "#" },
+            { answer: "Venom", type: 0, question: "Simbionte enemigo de Spider-Man.", link: "#" },
+            { answer: "Vikingos", type: 0, question: "Serie sobre Ragnar Lothbrok y sus expediciones.", link: "#" },
+            { answer: "Viral", type: 0, question: "Contenido que se difunde muy rápidamente por internet.", link: "#" },
+            { answer: "Video", type: 0, question: "MTV significa Music ______ Television.", link: "#" },
+            { answer: "Volkswagen", type: 0, question: "Marca de coches alemana creadora del 'Escarabajo'.", link: "#" },
+            { answer: "Visa", type: 0, question: "Marca de tarjetas de crédito y débito aceptada mundialmente.", link: "#" },
+            { answer: "Voldemort", type: 0, question: "El que no debe ser nombrado en Harry Potter.", link: "#" },
+            { answer: "Van", type: 0, question: "______ Gogh. Pintor postimpresionista de 'La Noche Estrellada'.", link: "#" },
+            { answer: "Vengadores", type: 0, question: "Nombre en español del grupo 'The Avengers'.", link: "#" }
+        ]
+    },
+    {
+        letter: "W",
+        variants: [
+            { answer: "Wikipedia", type: 0, question: "Enciclopedia libre y colaborativa de internet.", link: "#" },
+            { answer: "Whatsapp", type: 0, question: "La aplicación de mensajería más popular del mundo.", link: "#" },
+            { answer: "Windows", type: 0, question: "Sistema operativo de Microsoft.", link: "#" },
+            { answer: "Wifi", type: 0, question: "Tecnología que permite la conexión inalámbrica a internet.", link: "#" },
+            { answer: "Wonka", type: 0, question: "Willy ______. Dueño de la fábrica de chocolate.", link: "#" },
+            { answer: "Will", type: 0, question: "______ Smith. El Príncipe de Bel-Air.", link: "#" },
+            { answer: "Wakanda", type: 0, question: "País ficticio africano, hogar de Black Panther.", link: "#" },
+            { answer: "Walle", type: 0, question: "Robot compactador de basura de Pixar.", link: "#" },
+            { answer: "Wonder", type: 0, question: "______ Woman. La Mujer Maravilla.", link: "#" },
+            { answer: "World", type: 0, question: "______ Wide Web (www).", link: "#" }
+        ]
+    },
+    {
+        letter: "X",
+        variants: [
+            { answer: "Netflix", type: 1, question: "CONTIENE LA X: Plataforma de la 'N' roja.", link: "#" },
+            { answer: "Xbox", type: 0, question: "Consola de videojuegos de Microsoft.", link: "#" },
+            { answer: "Matrix", type: 1, question: "CONTIENE LA X: Película donde se esquivan balas a cámara lenta.", link: "#" },
+            { answer: "Xmen", type: 0, question: "Grupo de mutantes liderado por el Profesor X.", link: "#" },
+            { answer: "Twitter", type: 1, question: "CONTIENE LA X: Nombre actual (X) de esta red social.", link: "#" },
+            { answer: "Boxeo", type: 1, question: "CONTIENE LA X: Deporte de Rocky Balboa.", link: "#" },
+            { answer: "SpaceX", type: 1, question: "CONTIENE LA X: Empresa aeroespacial de Elon Musk.", link: "#" },
+            { answer: "Trex", type: 1, question: "CONTIENE LA X: El dinosaurio carnívoro más temido de Jurassic Park.", link: "#" },
+            { answer: "Alexa", type: 1, question: "CONTIENE LA X: Asistente virtual de Amazon.", link: "#" },
+            { answer: "Pixar", type: 1, question: "CONTIENE LA X: Estudio de animación de Disney.", link: "#" }
+        ]
+    },
+    {
+        letter: "Y",
+        variants: [
+            { answer: "Youtube", type: 0, question: "Plataforma de videos propiedad de Google.", link: "#" },
+            { answer: "Yoda", type: 0, question: "Maestro Jedi pequeño y verde que habla al revés.", link: "#" },
+            { answer: "Yankee", type: 0, question: "Daddy ______. El rey del Reguetón.", link: "#" },
+            { answer: "Yahoo", type: 0, question: "Buscador y portal de internet clásico de los 90.", link: "#" },
+            { answer: "Yeti", type: 0, question: "El abominable hombre de las nieves.", link: "#" },
+            { answer: "Yellow", type: 0, question: "______ Submarine. Canción y película de The Beatles.", link: "#" },
+            { answer: "Yoko", type: 0, question: "______ Ono. Artista y esposa de John Lennon.", link: "#" },
+            { answer: "Yoshi", type: 0, question: "Dinosaurio verde amigo de Mario.", link: "#" },
+            { answer: "Yesterday", type: 0, question: "Canción más versionada de la historia, de The Beatles.", link: "#" },
+            { answer: "York", type: 1, question: "CONTIENE LA Y: New ______. La ciudad que nunca duerme.", link: "#" }
+        ]
+    },
+    {
+        letter: "Z",
+        variants: [
+            { answer: "Zelda", type: 0, question: "Princesa del reino de Hyrule en los juegos de Nintendo.", link: "#" },
+            { answer: "Zombie", type: 0, question: "Muerto viviente, popularizado por 'The Walking Dead'.", link: "#" },
+            { answer: "Zara", type: 0, question: "Cadena de moda española fundada por Amancio Ortega.", link: "#" },
+            { answer: "Zuckerberg", type: 0, question: "Mark ______. Creador de Facebook.", link: "#" },
+            { answer: "Zidane", type: 0, question: "Zinedine ______. Futbolista francés famoso por su volea y su cabezazo.", link: "#" },
+            { answer: "Zodiaco", type: 0, question: "Los caballeros del ______. Anime clásico de armaduras.", link: "#" },
+            { answer: "Zoom", type: 0, question: "Aplicación de videollamadas que explotó durante la pandemia.", link: "#" },
+            { answer: "Zeus", type: 0, question: "Rey de los dioses del Olimpo en la mitología griega.", link: "#" },
+            { answer: "Zendaya", type: 0, question: "Actriz de Euphoria y novia de Spider-Man en el UCM.", link: "#" },
+            { answer: "Zootopia", type: 0, question: "Película de Disney sobre una ciudad de animales antropomórficos.", link: "#" }
+        ]
+    }
+];
+
+        let data = [];
+        let currentIndex = 0;
+        let timeLeft = 270; // 4 minutos y medio
+        let passCount = 0; 
+        let interval;
+        let roscoDOM = [];
+        let gameActive = false;
+
+        document.addEventListener("DOMContentLoaded", () => {
+            data = QUESTIONS_DB.map(entry => {
+                const randomVariant = entry.variants[Math.floor(Math.random() * entry.variants.length)];
+                return {
+                    id: entry.letter.toLowerCase(),
+                    letter: entry.letter,
+                    status: 'pending',
+                    ...randomVariant
+                };
+            });
+
+            createLetters(); 
+            
+            window.addEventListener('resize', updateLayout);
+            document.getElementById('user-input').addEventListener('keydown', (e) => {
+                if(e.key === 'Enter') verifyAnswer();
+            });
+        });
+
+        function startGame() {
+            document.getElementById('start-screen').style.display = 'none';
+            const music = document.getElementById('game-music');
+            music.volume = 0.3; 
+            music.play().catch(e => console.log("Music prevented by browser policy"));
+
+            gameActive = true;
+            document.getElementById('user-input').disabled = false;
+            document.getElementById('user-input').focus();
+            
+            startTimer();
+            updateUI();
+        }
+
+        function updateLayout() {
+            const minDim = Math.min(window.innerWidth, window.innerHeight);
+            const radius = minDim * 0.40; 
+            const total = data.length;
+
+            roscoDOM.forEach((div, i) => {
+                let angle = (360 / total) * i - 90;
+                let rad = angle * (Math.PI / 180);
+                let x = Math.cos(rad) * radius;
+                let y = Math.sin(rad) * radius;
+                div.style.transform = `translate(${x}px, ${y}px)`;
+                if(div.classList.contains('active')) {
+                      div.style.transform += " scale(1.4)";
+                }
+            });
+        }
+
+        function createLetters() {
+            const layer = document.getElementById('letters-layer');
+            layer.innerHTML = ''; 
+            roscoDOM = [];
+            data.forEach((item) => {
+                let div = document.createElement('div');
+                div.className = 'letter-node';
+                div.innerText = item.letter;
+                layer.appendChild(div);
+                roscoDOM.push(div);
+            });
+            updateLayout();
+        }
+
+        function startTimer() {
+            interval = setInterval(() => {
+                if(!gameActive) return;
+                timeLeft--;
+                document.getElementById('timer-ring').innerText = timeLeft;
+                if(timeLeft <= 0) finishGame();
+            }, 1000);
+        }
+
+        function updateUI() {
+            if(!gameActive) return;
+            let found = false;
+            let checks = 0;
+            while(checks < data.length) {
+                if(data[currentIndex].status === 'pending') {
+                    found = true;
+                    break;
+                }
+                currentIndex++;
+                if(currentIndex >= data.length) currentIndex = 0;
+                checks++;
+            }
+            if (!found) { finishGame(); return; }
+
+            roscoDOM.forEach(l => l.classList.remove('active'));
+            if(roscoDOM[currentIndex]) roscoDOM[currentIndex].classList.add('active');
+            updateLayout();
+
+            const current = data[currentIndex];
+            document.getElementById('clue-type').innerText = current.type === 0 
+                ? `EMPIEZA POR ${current.letter}` 
+                : `CONTIENE LA ${current.letter}`;
+            document.getElementById('definition').innerText = current.question;
+            
+            const guideLink = document.getElementById('guide-link');
+            if (current.link && current.link !== "#") {
+                guideLink.href = current.link;
+                guideLink.style.display = "inline-block";
+            } else {
+                guideLink.style.display = "none";
+            }
+
+            document.getElementById('user-input').value = '';
+        }
+
+        function verifyAnswer() {
+            if(!gameActive) return;
+            const inputField = document.getElementById('user-input');
+            let input = inputField.value.trim().toLowerCase();
+            let correct = data[currentIndex].answer.toLowerCase();
+            
+            input = input.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            correct = correct.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+            const domNode = roscoDOM[currentIndex];
+
+            if(input === correct) {
+                data[currentIndex].status = 'correct';
+                domNode.classList.add('correct', 'anim-correct');
+                inputField.classList.add('flash-green');
+            } else {
+                data[currentIndex].status = 'wrong';
+                domNode.classList.add('wrong', 'anim-wrong');
+                inputField.classList.add('flash-red');
+            }
+
+            setTimeout(() => {
+                inputField.classList.remove('flash-green', 'flash-red');
+            }, 500);
+
+            currentIndex++;
+            if(currentIndex >= data.length) currentIndex = 0;
+            updateUI();
+        }
+
+        function passTurn() {
+            if(!gameActive) return;
+            passCount++; 
+            currentIndex++;
+            if(currentIndex >= data.length) currentIndex = 0;
+            updateUI();
+        }
+
+        function finishGame() {
+            gameActive = false;
+            clearInterval(interval);
+            const correctCount = data.filter(d => d.status === 'correct').length;
+            
+            document.getElementById('ui-layer').style.display = 'none';
+            document.getElementById('end-screen').style.display = 'flex';
+            
+            let title = "GAME OVER";
+            if(correctCount === data.length) title = "¡LA ROMPISTE!";
+            document.getElementById('end-title').innerText = title;
+            document.getElementById('end-score').innerText = `Aciertos: ${correctCount} / ${data.length}`;
+
+            // --- CÁLCULO DE RANKING (Versión Pop Arg) ---
+            // --- CÁLCULO DE RANKING (Versión Pop Arg Extendida) ---
+            // Asumimos que data.length es 27
+            let score = (correctCount * 100) + (timeLeft * 1.5) - (passCount * 5);
+            if (score < 0) score = 0;
+
+            let rankTitle = "";
+            let rankMsg = "";
+
+            // Lógica en escalera descendente (de mayor a menor)
+            if (correctCount === data.length) { // 27
+                rankTitle = "🦄 EL UNICORNIO";
+                rankMsg = "¡Imposible! Sos una leyenda urbana. Cerrá todo, ya ganaste la vida (¿o quizás no?).";
+            } 
+            else if (correctCount >= 26) {
+                rankTitle = "🐐 LA CABRA (GOAT)";
+                rankMsg = "La puta cabra. Pifiaste una sola. Mis respetos.";
+            }
+            else if (correctCount >= 24) {
+                rankTitle = "🧠 CEREBRO GALÁCTICO";
+                rankMsg = "Estás a otro nivel. Tu IQ cultural me sorprendió. ¡Casi perfecto!";
+            }
+            else if (correctCount >= 22) {
+                rankTitle = "🗿 GIGACHAD / BASADO";
+                rankMsg = "No mirás las pelis, las analizás frame por frame.";
+            }
+            else if (correctCount >= 20) {
+                rankTitle = "⚔️ ADMIN DE DISCORD";
+                rankMsg = "Tenés poder y calle digital. Se nota que no tocás pasto hace rato.";
+            }
+            else if (correctCount >= 17) {
+                rankTitle = "🔥 INFLUENCER VERIFICADO";
+                rankMsg = "Marcás tendencia. Sabés bocha, pero te falta un poquiiito más para ganarte mi respeto.";
+            }
+            else if (correctCount >= 14) {
+                rankTitle = "🎓 LICENCIADO EN NETFLIX";
+                rankMsg = "Te viste todo el catálogo, pero te olvidaste los nombres de los actores secundarios.";
+            }
+            else if (correctCount >= 11) {
+                rankTitle = "🍿 BINGE-WATCHER";
+                rankMsg = "Zafás. Sos de los que maratonean el finde pero se duermen en el capítulo 4.";
+            }
+            else if (correctCount >= 8) {
+                rankTitle = "📱 ADICTO AL SCROLL";
+                rankMsg = "Mucha cultura de Reels y TikTok, pero te falta ver los clásicos completos.";
+            }
+            else if (correctCount >= 5) {
+                rankTitle = "🧢 NORMIE BÁSICO";
+                rankMsg = "Ves lo que está de moda y nada más. Te falta.";
+            }
+            else if (correctCount >= 3) {
+                rankTitle = "👴 BOOMER DE FACEBOOK";
+                rankMsg = "Me parece que esto no es lo tuyo. ¿Probaste mandando Piolines al grupo de la familia?";
+            }
+            else if (correctCount >= 1) {
+                rankTitle = "👽 TURISTA EN INTERNET";
+                rankMsg = "¿Vivís en un tupper? Le erraste a casi todo. Ponete las pilas.";
+            }
+            else { // 0 aciertos
+                rankTitle = "🤖 NPC BUGEADO";
+                rankMsg = "Cero. Nulo. Nada. ¿Estás afk o sos un bot? Reiniciá el módem.";
+            }
+
+            document.getElementById('rank-display-title').innerText = rankTitle;
+            document.getElementById('rank-display-msg').innerText = rankMsg;
+        }
+
+        function submitScore(e) {
+            e.preventDefault();
+            const email = document.getElementById('player-email').value;
+            const btn = document.querySelector('.submit-btn');
+            
+            btn.innerText = "⏳ SUBIENDO...";
+            btn.disabled = true;
+
+            setTimeout(() => {
+                console.log("Lead capturado:", email); 
+                btn.style.background = "#00ff00"; 
+                btn.innerText = "✅ ¡YA ESTÁ GUARDADO!";
+                alert("¡Joya! Tu puntaje ya quedó registrado en la nube.");
+            }, 1500);
+        }
+
+        function copyResult() {
+            let mapStr = "";
+            let counter = 0;
+
+            data.forEach((item) => {
+                if(item.status === 'correct') mapStr += '🟢';
+                else if(item.status === 'wrong') mapStr += '🔴';
+                else mapStr += '⚪'; 
+                
+                counter++;
+                if(counter % 9 === 0) mapStr += '\n'; 
+            });
+            
+            const correctCount = data.filter(d => d.status === 'correct').length;
+            const text = `🍿 27 Facturas (el próximo juego de M.M.)\n\n${mapStr}\n🏆 Score: ${correctCount}/${data.length}\n¿Sos NPC o Ídolo? ¡Jugá acá!`;
+            
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.querySelector('.share-btn');
+                const originalText = btn.innerText;
+                btn.innerText = "¡COPIADO!";
+                setTimeout(() => btn.innerText = originalText, 2000);
+            }).catch(err => {
+                alert("Copiá manual, che: " + correctCount + "/" + data.length);
+            });
+        }
+    </script>
+</body>
+</html>
